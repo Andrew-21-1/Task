@@ -1,0 +1,28 @@
+{
+  "name": "lirten",
+  "version": "1.0.0",
+  "description": "This package.json holds the dependencies of all the backend services of lirtenhub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-jwt": "^5.3.1",
+    "joi": "^14.3.1",
+    "jwt-decode": "^2.2.0",
+    "moment": "^2.24.0",
+    "passport": "^0.4.0",
+    "pg": "^7.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.0",
+    "nodemon": "^1.19.1"
+  },
+  "author": "Ammar Yasser",
+  "license": "ISC"
+}
