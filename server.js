@@ -5,8 +5,8 @@ const cors = require('cors')
 const passport = require('passport')
 
 //importing files
-const client=require('./config/DBconfig')
-const tables=require('./scripts/tables.script')
+const client = require('./config/DBconfig')
+const tables = require('./scripts/tables.script')
 const loggerMiddleware = require('./api/middleware/logger')
 
 //intiating express app
@@ -30,7 +30,8 @@ app.use(passport.initialize())
 //Query that creates all tables
 //client.query(tables.createTables)
 
-client.connect()
+client
+  .connect()
   .then(() => {
     console.log('Connected to postgres 💪 .')
   })
@@ -38,10 +39,10 @@ client.connect()
     console.error('Unable to connect to postgres 😳 .', err)
   })
 
-  // Direct to Route Handlers
-  app.use('/api/v1/users', users)
-  app.use('/api/v1/meetings', meetings)
-  app.use('/api/v1/tasks', tasks)
+// Direct to Route Handlers
+app.use('/api/v1/users', users)
+app.use('/api/v1/meetings', meetings)
+app.use('/api/v1/tasks', tasks)
 
 const port = 5000
 app.listen(port, () => console.log(`Server up and running on ${port} 👍 .`))
