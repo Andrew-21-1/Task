@@ -40,9 +40,9 @@ client
   })
 
 // Direct to Route Handlers
-app.use('/api/v1/users', users)
-app.use('/api/v1/meetings', meetings)
-app.use('/api/v1/tasks', tasks)
+app.use('/api/users', users)
+app.use('/api/meetings', meetings)
+app.use('/api/tasks', tasks)
 
 const port = 5000
 app.listen(port, () => console.log(`Server up and running on ${port} 👍 .`))

@@ -1,209 +1,288 @@
-//Existing files Imports
-const db = require('../../config/DBconfig')
-const tokenKey = require('../../config/keys.js').secretOrKey
-const userValidation = require('../../helpers/user.validation')
+const userFunctions = require('../../helpers/funtions/user.function')
 
-//External packages Imports
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+exports.signup = async (req, res) => {
+  const { email, username } = req.body.body
 
-//Create User Function(Insert Into Table)
-exports.createUser = async function(x) {
-  const User = x
-
-  //Password Hashing
-  const salt = bcrypt.genSaltSync(10)
-  const cryptedPassword = bcrypt.hashSync(User.password, salt)
-  User.password = cryptedPassword
-
-  //Query/Values
-  const query = `INSERT INTO public.users(email,username, password) VALUES ($1, $2, $3) RETURNING *`
-  const values = [User.email, User.username, cryptedPassword]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  const createdUser = result.rows[0]
-  return createdUser
-}
-
-exports.freezeUser = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE users SET frozen='true' WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.unfreezeUser = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE users SET frozen='false' WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.suspendUser = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE users SET suspended='true' WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.unsuspendUser = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE users SET suspended='false' WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.loginUser = async function(x) {
-  //Needed constants in function
-  let token = 'Bearer '
-  let payload = {
-    id: x
-  }
-
-  //Token Creation
-  payload.id = result.rows[0].id
-  token = token + jwt.sign(payload, tokenKey, { expiresIn: '1h' })
-
-  //Return of generateted JWT Token
-  return token
-}
-
-exports.checkEmail = async function(x) {
-  const email = x
-
-  //Query/Values
-  const query = `SELECT * FROM users WHERE email=$1`
-  const values = [email]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0]) {
-    return true
-  } else {
-    return false
-  }
-}
-
-exports.checkUsername = async function(x) {
-  const username = x
-
-  //Query/Values
-  const query = `SELECT * FROM users WHERE username=$1`
-  const values = [username]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0]) {
-    return true
-  } else {
-    return false
-  }
-}
-
-exports.checkUserFrozen = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `SELECT * FROM users WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
-  } else {
-    return false
-  }
-}
-
-exports.checkUserSuspended = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `SELECT * FROM users WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].suspended) {
-    return true
-  } else {
-    return false
-  }
-}
-
-exports.checkLogin = async function(x, y) {
-  let cryptedPassword
-  const username = x
-  const password = y
-
-  //Query/Values
-  const query = `SELECT * FROM users WHERE username=$1`
-  const values = [username]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  if (result.rows[0].password) {
-    cryptedPassword = result.rows[0].password
-    if (bcrypt.compareSync(password, cryptedPassword)) {
-      return true
+  const emailCheck = await userFunctions.checkEmail(email)
+  const usernameCheck = await userFunctions.checkUsername(username)
+  if (!emailCheck) {
+    if (!usernameCheck) {
+      const result = await userFunctions.validateUser(req.body.body)
+      if (result == true) {
+        const createdUser = await userFunctions.createUser(req.body.body)
+        const newUser = {
+          email: createdUser.email,
+          username: createdUser.username,
+          suspended: createdUser.suspended,
+          frozen: createdUser.frozen
+        }
+        res.json({
+          header: {
+            statusCode: '0000',
+            requestId: 'A-123',
+            timestamp: new Date()
+          },
+          msg: 'Account Created successfully',
+          body: newUser
+        })
+      } else {
+        res.json({
+          header: {
+            statusCode: '1005',
+            requestId: 'A-123',
+            timestamp: new Date()
+          },
+          msg: result.error,
+          body: {
+            username: username,
+            email: email
+          }
+        })
+      }
     } else {
-      return false
+      res.json({
+        header: {
+          statusCode: '1004',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Username Already in Use try a Diffrent Username',
+        body: {
+          username: username
+        }
+      })
     }
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '1001',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Email Already in Use try a Diffrent Email',
+      body: {
+        email: email
+      }
+    })
   }
 }
 
-exports.checkUserExists = async function(x) {
-  const id = x
+exports.signin = async (req, res) => {
+  const { username, password } = req.body.body
 
-  //Query/Values
-  const query = `SELECT * FROM users WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  if (result.rows[0]) {
-    return true
+  const checkLogin = await userFunctions.checkLogin(username, password)
+  if (checkLogin.flag == true) {
+    if (await userFunctions.checkUserFrozen(checkLogin.userId)) {
+      res.json({
+        header: {
+          statusCode: '1010',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Table Row is Frozen and unaccessable'
+      })
+    }
+    if (await userFunctions.checkUserSuspended(checkLogin.userId)) {
+      res.json({
+        header: {
+          statusCode: '1002',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Your Account is currently Suspended'
+      })
+    }
+    const token = await userFunctions.loginUser(checkLogin.userId)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Sucessful Login',
+      body: {
+        token: token
+      }
+    })
   } else {
-    return false
+    if ((checkLogin.errorid = 1)) {
+      res.json({
+        header: {
+          statusCode: '1008',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: checkLogin.error
+      })
+    } else {
+      res.json({
+        header: {
+          statusCode: '1009',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: checkLogin.error
+      })
+    }
   }
 }
 
-exports.validateUser = async function(x) {
-  const isValidated = userValidation.createValidation(x)
-  if (isValidated.error) {
-    return { error: isValidated.error.details[0].message, validated: false }
+exports.suspendUser = async (req, res) => {
+  const id = req.body.body.id
+
+  const checkFrozen = await userFunctions.checkUserFrozen(id)
+  const checkSuspended = await userFunctions.checkUserSuspended(id)
+
+  if (!checkFrozen) {
+    if (!checkSuspended) {
+      const suspend = await userFunctions.suspendUser(id)
+      const updatedSuspend = {
+        email: suspend.email,
+        username: suspend.username,
+        suspended: suspend.suspended,
+        frozen: suspend.frozen
+      }
+      res.json({
+        header: {
+          statusCode: '0000',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: suspend.username + ' Suspended',
+        body: updatedSuspend
+      })
+    } else {
+      res.json({
+        header: {
+          statusCode: '1002',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Account is currently Suspended'
+      })
+    }
   } else {
-    return true
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is Frozen and unaccessable'
+    })
+  }
+}
+
+exports.unsuspendUser = async (req, res) => {
+  const id = req.body.body.id
+
+  const checkFrozen = await userFunctions.checkUserFrozen(id)
+  const checkSuspended = await userFunctions.checkUserSuspended(id)
+
+  if (!checkFrozen) {
+    if (checkSuspended) {
+      const suspend = await userFunctions.unsuspendUser(id)
+      const updatedSuspend = {
+        email: suspend.email,
+        username: suspend.username,
+        suspended: suspend.suspended,
+        frozen: suspend.frozen
+      }
+      res.json({
+        header: {
+          statusCode: '0000',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: suspend.username + ' Unsuspended',
+        body: updatedSuspend
+      })
+    } else {
+      res.json({
+        header: {
+          statusCode: '1003',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Your Account is currently Unsuspended'
+      })
+    }
+  } else {
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is Frozen and unaccessable'
+    })
+  }
+}
+
+exports.freezeUser = async (req, res) => {
+  const id = req.body.body.id
+
+  const checkFrozen = await userFunctions.checkUserFrozen(id)
+
+  if (!checkFrozen) {
+    const freeze = await userFunctions.freezeUser(id)
+    const updatedFreeze = {
+      email: freeze.email,
+      username: freeze.username,
+      suspended: freeze.suspended,
+      frozen: freeze.frozen
+    }
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table User with id ' + freeze.id + ' is now Frozen',
+      body: updatedFreeze
+    })
+  } else {
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Frozen'
+    })
+  }
+}
+
+exports.unfreezeUser = async (req, res) => {
+  const id = req.body.body.id
+
+  const checkFrozen = await userFunctions.checkUserFrozen(id)
+
+  if (checkFrozen) {
+    const freeze = await userFunctions.unfreezeUser(id)
+    const updatedFreeze = {
+      email: freeze.email,
+      username: freeze.username,
+      suspended: freeze.suspended,
+      frozen: freeze.frozen
+    }
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table User with id ' + freeze.id + ' is now Unfrozen',
+      body: updatedFreeze
+    })
+  } else {
+    res.json({
+      header: {
+        statusCode: '1011',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Unfrozen'
+    })
   }
 }

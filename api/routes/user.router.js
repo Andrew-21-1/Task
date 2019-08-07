@@ -1,39 +1,12 @@
-const User = require('../controllers/user.controller')
+const userController = require('../controllers/user.controller')
 const express = require('express')
 const router = express.Router()
 
-// const User1 = {
-//   email: 'andrew.aswwwhr11111af@ymail.com',
-//   username: 'andrewww1111ashraf',
-//   password: '125378waas'
-// }
-
-// User.createUser(User1).then(res => {
-//   console.log(res)
-// })
-// User.freezeUser(1)
-// User.unfreezeUser(1)
-
-// User.suspendUser(1)
-// User.unsuspendUser(1)
-
-// User.loginUser('AndrewAshraf1', 'AndrewAshraf').then(res => {
-//   console.log(res)
-// })
-// User.checkEmail('andrew.ashraf@live.com').then(res => {
-//   console.log(res)
-// })
-
-// User.checkUserFrozen(1).then(res => {
-//   console.log(res)
-// })
-
-// User.checkUserSuspended(1).then(res => {
-//   console.log(res)
-// })
-
-// User.validateUser(User1).then(res => {
-//   console.log(res)
-// })
+router.post('/signUp/v1', userController.signup)
+router.post('/signIn/v1', userController.signin)
+router.post('/suspendUser/v1', userController.suspendUser)
+router.post('/unsuspendUser/v1', userController.unsuspendUser)
+router.post('/freezeUser/v1', userController.freezeUser)
+router.post('/unfreezeUser/v1', userController.unfreezeUser)
 
 module.exports = router

@@ -4,7 +4,7 @@ module.exports = {
   createValidation: req => {
     const createUserSchema = {
       username: Joi.string()
-        .min(2)
+        .min(3)
         .required(),
       email: Joi.string()
         .regex(/[a-z0-9\.\_\-]+\@[a-z]/)

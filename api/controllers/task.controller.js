@@ -1,281 +1,219 @@
-//Existing files Imports
-const db = require('../../config/DBconfig')
-const taskValidation = require('../../helpers/task.validation')
+const taskFunctions = require('../../helpers/funtions/task.function')
+const appliesFunctions = require('../../helpers/funtions/taskApplies.function')
 
-//External packages Imports
-
-exports.checkDeadline = async function(x) {
-  let GivenDate = x
-
-  //Getting todays current date/time
-  let CurrentDate = new Date()
-  GivenDate = new Date(GivenDate)
-
-  //Comparing inputted time with current date/time
-  if (GivenDate > CurrentDate) {
-    return true
-  } else {
-    return false
+exports.createTask = async (req, res) => {
+  const Task = req.body.body
+  const newTask = {
+    topic: Task.topic,
+    deadline: Task.deadline
   }
-}
 
-exports.createTask = async function(x) {
-  const Task = x
+  const deadline = await taskFunctions.checkDeadline(Task.deadline)
 
-  //Query That transforms inputted time to timestamp readable in postgres
-  const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
-  const values = [Task.deadline]
-
-  //Query Excution
-  const result = await db.query(query, values)
-
-  //Inserting Task into Table
-  const query1 = `INSERT INTO public.tasks(assigner_id, topic, deadline) VALUES ($1, $2,$3) RETURNING *;`
-  const values1 = [Task.assigner_id, Task.topic, result.rows[0].to_timestamp]
-
-  //Query Excution
-  const result1 = await db.query(query1, values1)
-
-  //Returning Created Task
-  const createdTask = result1.rows[0]
-
-  return createdTask
-}
-
-exports.editTask = async function(x) {
-  const Task = x
-
-  if (Task.topic && Task.deadline) {
-    //Query That transforms inputted time to timestamp readable in postgres
-    const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
-    const values = [Task.deadline]
-
-    //Query Excution
-    const result = await db.query(query, values)
-
-    //Query which updates a certain row
-    const query1 = `UPDATE public.tasks SET topic=$2,deadline=$3 WHERE id=$1 RETURNING *`
-    const values1 = [Task.id, Task.topic, result.rows[0].to_timestamp]
-
-    //Query Excution
-    const result1 = await db.query(query1, values1)
-
-    //Returning Updated Task
-    return result1.rows[0]
-  } else {
-    if (Task.topic) {
-      //Query which updates a certain row
-      const query = `UPDATE public.tasks SET topic=$2 WHERE id=$1 RETURNING *`
-      const values = [Task.id, Task.topic]
-
-      //Query Excution
-      const result = await db.query(query, values)
-
-      //Returning Updated Task
-      return result.rows[0]
+  if (deadline) {
+    const result = await taskFunctions.validateCreateTask(newTask)
+    if (result == true) {
+      const createdTask = await taskFunctions.createTask(Task)
+      res.json({
+        header: {
+          statusCode: '0000',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Task Created successfully',
+        body: createdTask
+      })
     } else {
-      if (Task.deadline) {
-        //Query That transforms inputted time to timestamp readable in postgres
-        const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
-        const values = [Task.deadline]
-
-        //Query Excution
-        const result = await db.query(query, values)
-
-        //Query which updates a certain row
-        const query1 = `UPDATE public.tasks SET deadline=$2 WHERE id=$1 RETURNING *`
-        const values1 = [Task.id, result.rows[0].to_timestamp]
-
-        //Query Excution
-        const result1 = await db.query(query1, values1)
-
-        //Query Excution
-        return result1.rows[0]
-      }
+      res.json({
+        header: {
+          statusCode: '2014',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: result.error,
+        body: {
+          topic: result.topic,
+          deadline: result.deadline
+        }
+      })
     }
-  }
-}
-
-exports.checkTaskExists = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `SELECT * FROM tasks WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  if (result.rows[0]) {
-    return true
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '2012',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Deadline is Behind Current Date',
+      body: {
+        deadline: Task.deadline
+      }
+    })
   }
 }
 
-exports.freezeTask = async function(x) {
-  const id = x
+exports.editTask = async (req, res) => {
+  const Task = req.body.body
+  const newTask = {
+    topic: Task.topic,
+    deadline: Task.deadline
+  }
 
-  //Query/Values
-  const query = `UPDATE tasks SET frozen='true' WHERE id=$1`
-  const values = [id]
+  const deadline = await taskFunctions.checkDeadline(Task.deadline)
 
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.unfreezeTask = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE tasks SET frozen='false' WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  db.query(query, values)
-}
-
-exports.acceptApplicant = async function(x, y) {
-  const applicants_id = x
-  const task_id = y
-
-  //Query/Values
-  const query = `UPDATE public.tasks SET assignee_id=$1,assigned=true WHERE id=$2 RETURNING *`
-  const values = [applicants_id, task_id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  return result.rows[0]
-}
-
-exports.confirmTask = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `UPDATE public.tasks SET confirmed=true WHERE id=$1 RETURNING *`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  return result.rows[0]
-}
-
-exports.submitTask = async function(x) {
-  const Submission = x
-
-  //Query/Values
-  const query = `UPDATE public.tasks SET submission=$2 WHERE id=$1 RETURNING *`
-  const values = [Submission.id, Submission.submission]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  return result.rows[0]
-}
-
-exports.viewApplicants = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `SELECT * FROM taskApplies WHERE task_id=$1 RETURNING *`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  return result.rows
-}
-
-exports.checkConfirmed = async function(x) {
-  const id = x
-
-  //Query/Values
-  const query = `SELECT submission FROM tasks WHERE id=$1`
-  const values = [id]
-
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].submission) {
-    return true
+  if (deadline) {
+    const result = await taskFunctions.validateUpdateTask(newTask)
+    if (result == true) {
+      const createdTask = await taskFunctions.editTask(Task)
+      res.json({
+        header: {
+          statusCode: '0000',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Task Updated successfully',
+        body: createdTask
+      })
+    } else {
+      res.json({
+        header: {
+          statusCode: '2014',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: result.error,
+        body: {
+          topic: result.topic,
+          deadline: result.deadline
+        }
+      })
+    }
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '2012',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Deadline is Behind Current Date',
+      body: {
+        deadline: Task.deadline
+      }
+    })
   }
 }
 
-exports.checkAssigned = async function(x) {
-  const id = x
+exports.freezeTask = async (req, res) => {
+  const id = req.body.body.id
 
-  //Query/Values
-  const query = `SELECT assigned FROM tasks WHERE id=$1`
-  const values = [id]
+  const checkFrozen = await taskFunctions.checkTaskFrozen(id)
 
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].assigned) {
-    return true
+  if (!checkFrozen) {
+    const freeze = await taskFunctions.freezeTask(id)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table Task with id ' + id + ' is now Frozen',
+      body: freeze
+    })
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Frozen'
+    })
   }
 }
 
-exports.checkTaskFrozen = async function(x) {
-  const id = x
+exports.unfreezeTask = async (req, res) => {
+  const id = req.body.body.id
 
-  //Query/Values
-  const query = `SELECT * FROM tasks WHERE id=$1`
-  const values = [id]
+  const checkFrozen = await taskFunctions.checkTaskFrozen(id)
 
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
+  if (checkFrozen) {
+    const freeze = await taskFunctions.unfreezeTask(id)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table Task with id ' + id + ' is now Frozen',
+      body: freeze
+    })
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Unfrozen'
+    })
   }
 }
 
-exports.checkSubmit = async function(x) {
-  const id = x
+exports.acceptApplicant = async (req, res) => {
+  const { applicant_id, task_id } = req.body.body
 
-  //Query/Values
-  const query = `SELECT submission FROM tasks WHERE id=$1`
-  const values = [id]
+  const checkTaskFrozen = await taskFunctions.checkTaskFrozen(task_id)
+  const checkApplyFrozen = await appliesFunctions.checkTaskApplyFrozen(task_id, applicant_id)
 
-  //Query Execution
-  const result = await db.query(query, values)
-
-  //Check if found or not
-  if (result.rows[0].submission) {
-    return true
+  if (!checkTaskFrozen) {
+    if (!checkApplyFrozen) {
+      const checkApplyExist = await appliesFunctions.checkTaskAppliesExists(task_id, applicant_id)
+      if (checkApplyExist) {
+        const acceptApplicant = await taskFunctions.acceptApplicant(applicant_id, task_id)
+        res.json({
+          header: {
+            statusCode: '0000',
+            requestId: 'A-123',
+            timestamp: new Date()
+          },
+          msg: 'Applicant has been accepted to Task',
+          body: acceptApplicant
+        })
+      }
+    } else {
+      res.json({
+        header: {
+          statusCode: '1010',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Table TaskApplies Row is Frozen and unaccessable'
+      })
+    }
   } else {
-    return false
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Task Row is Frozen and unaccessable'
+    })
   }
 }
 
-exports.validateCreateTask = async function(x) {
-  //Joi validation Import
-  const isValidated = taskValidation.createValidation(x)
-  if (isValidated.error) {
-    return { error: isValidated.error.details[0].message, validated: false }
-  } else {
-    return true
-  }
-}
+exports.viewTasks = async (req, res) => {
+  const { limits, offset } = req.body.body
 
-exports.validateUpdateTask = async function(x) {
-  //Joi validation Import
-  const isValidated = taskValidation.updateValidation(x)
-  if (isValidated.error) {
-    return { error: isValidated.error.details[0].message, validated: false }
-  } else {
-    return true
-  }
+  const Tasks = await taskFunctions.viewAllTasks(limits, offset)
+
+  res.json({
+    header: {
+      statusCode: '0000',
+      requestId: 'A-123',
+      timestamp: new Date()
+    },
+    msg: 'Tasks return with offset ' + offset + ' and limits ' + limits,
+    body: Tasks
+  })
 }
