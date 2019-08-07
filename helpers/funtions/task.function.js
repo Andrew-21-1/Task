@@ -19,6 +19,26 @@ exports.checkDeadline = async function(x) {
   }
 }
 
+exports.checkDeadlinePassed = async function(x) {
+  let id = x
+
+  const query = `SELECT deadline FROM tasks WHERE id=$1`
+  const values = [id]
+
+  const result = await db.query(query, values)
+
+  //Getting todays current date/time
+  let CurrentDate = new Date()
+  GivenDate = new Date(result.rows[0].deadline)
+
+  //Comparing inputted time with current date/time
+  if (GivenDate < CurrentDate) {
+    return true
+  } else {
+    return false
+  }
+}
+
 exports.createTask = async function(x) {
   const Task = x
 
@@ -176,7 +196,7 @@ exports.submitTask = async function(x) {
   //Query Execution
   const result = await db.query(query, values)
 
-  return result.rows[0]
+  return result.rows
 }
 
 exports.viewApplicants = async function(x) {
@@ -239,11 +259,12 @@ exports.checkTaskFrozen = async function(x) {
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null)
+    if (result.rows[0].frozen) {
+      return true
+    } else {
+      return false
+    }
 }
 
 exports.checkSubmit = async function(x) {
@@ -291,6 +312,21 @@ exports.viewAllTasks = async function(x, y) {
   //Query Execution
   const query = `SELECT * FROM tasks LIMIT $1 OFFSET $2`
   const values = [limit, offset]
+
+  //Query Execution
+  const result = await db.query(query, values)
+
+  return result.rows
+}
+
+exports.viewMyTasks = async function(x, y, z) {
+  const limit = x
+  const offset = y
+  const id = z
+
+  //Query Execution
+  const query = `SELECT * FROM tasks WHERE assigner_id=$3 LIMIT $1 OFFSET $2`
+  const values = [limit, offset, id]
 
   //Query Execution
   const result = await db.query(query, values)

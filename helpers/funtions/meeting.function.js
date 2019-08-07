@@ -181,9 +181,11 @@ exports.checkMeetingFrozen = async function(x) {
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null) {
+    if (result.rows[0].frozen) {
+      return true
+    } else {
+      return false
+    }
+  } else return null
 }

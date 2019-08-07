@@ -16,5 +16,13 @@ module.exports = {
       deadline: Joi.date()
     }
     return Joi.validate(req, updateTaskSchema)
+  },
+  submissionValidation: req => {
+    const submitTaskSchema = {
+      submission: Joi.string()
+        .min(20)
+        .required()
+    }
+    return Joi.validate(req, submitTaskSchema)
   }
 }

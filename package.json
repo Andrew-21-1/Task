@@ -16,7 +16,8 @@
     "jwt-decode": "^2.2.0",
     "moment": "^2.24.0",
     "passport": "^0.4.0",
-    "pg": "^7.11.0"
+    "pg": "^7.11.0",
+    "uuidv4": "^4.0.0"
   },
   "devDependencies": {
     "eslint": "^5.16.0",
