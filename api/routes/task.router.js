@@ -1,10 +1,11 @@
 const Task = require('../controllers/task.controller')
+const Applies = require('../controllers/taskApplies.controller')
 const express = require('express')
 const router = express.Router()
 
 // Task.checkDeadline(1)
 // const Task2 = {
-//   //  assigner_id: 1,
+//   assigner_id: 1,
 //   topic: 'Create a DBBBBB',
 //   deadline: '2019-08-06 22:59:20'
 // }
@@ -27,7 +28,7 @@ const router = express.Router()
 //   console.log(res)
 // })
 
-// Task.acceptApplicant(1, 1).then(res => {
+// Task.acceptApplicant(2, 6).then(res => {
 //   console.log(res)
 // })
 
@@ -57,6 +58,22 @@ const router = express.Router()
 // })
 
 // Task.validateCreateTask(Task2).then(res => {
+//   console.log(res)
+// })
+
+// Applies.createTaskApplies(2, 1).then(res => {
+//   console.log(res)
+// })
+
+// Applies.checkTaskAppliesExists(1, 1).then(res => {
+//   console.log(res)
+// })
+
+// Applies.freezeTaskApply(2, 1)
+
+// Applies.unfreezeTaskApply(2, 1)
+
+// Applies.checkTaskApplyFrozen(2, 1).then(res => {
 //   console.log(res)
 // })
 

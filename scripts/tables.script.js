@@ -50,6 +50,7 @@ CREATE TABLE Meetings (
   organizer_id INT NOT NULL,
   starts TIMESTAMP NOT NULL,
   ends TIMESTAMP NOT NULL,
+  frozen boolean DEFAULT false,
   PRIMARY KEY (id),
   CONSTRAINT fk_organizer FOREIGN KEY (organizer_id) REFERENCES users (id)
  );

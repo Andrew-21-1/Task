@@ -23,16 +23,16 @@ exports.createMeeting = async function(x) {
   const Meeting = x
 
   //Query That transforms inputted time to timestamp readable in postgres
-  const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
-  const values = [Meeting.start]
-  const values2 = [Meeting.start]
+  const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
+  const values = [Meeting.starts]
+  const values2 = [Meeting.ends]
 
   //Query Excution
   const result = await db.query(query, values)
   const result2 = await db.query(query, values2)
 
   //Inserting Meetings into Table
-  const query1 = `INSERT INTO public.meetings(organizer_id, start, end) VALUES ($1, $2,$3) RETURNING *;`
+  const query1 = `INSERT INTO public.meetings(organizer_id, starts, ends) VALUES ($1, $2,$3) RETURNING *;`
   const values1 = [Meeting.organizer_id, result.rows[0].to_timestamp, result2.rows[0].to_timestamp]
 
   //Query Excution
@@ -41,24 +41,45 @@ exports.createMeeting = async function(x) {
   //Returning Created Meeting
   const createdMeeting = result3.rows[0]
 
+  for (let i = 0; Meeting.tasks.length > i; i++) {
+    let y = Meeting.task[i]
+
+    //Inserting Meetings into Table
+    const query = `SELECT * FROM tasks WHERE id=$1 RETURNING *;`
+    const values = [y]
+
+    //Query Excution
+    const result = await db.query(query, values)
+
+    if (result.rows[0].assignee_id) {
+      //Inserting Meetings into Table
+      const query1 = `INSERT INTO public.meetingsaccepts(task_id, meeting_id,invited_id) VALUES ($1, $2,$3) RETURNING *;`
+      const values1 = [x, result3.rows[0].id, result.rows[0].assignee_id]
+
+      //Query Excution
+      const result1 = await db.query(query1, values1)
+      console.log(result1)
+    }
+  }
+
   return createdMeeting
 }
 
 exports.editMeeting = async function(x) {
   const Meeting = x
 
-  if (Meeting.start && Meeting.end) {
+  if (Meeting.starts && Meeting.ends) {
     //Query That transforms inputted time to timestamp readable in postgres
-    const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
-    const values = [Meeting.start]
-    const values2 = [Meeting.end]
+    const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
+    const values = [Meeting.starts]
+    const values2 = [Meeting.ends]
 
     //Query Excution
     const result = await db.query(query, values)
     const result2 = await db.query(query, values2)
 
     //Query which updates a certain row
-    const query1 = `UPDATE public.meetings SET start=$2,end=$3 WHERE id=$1 RETURNING *`
+    const query1 = `UPDATE public.meetings SET starts=$2,ends=$3 WHERE id=$1 RETURNING *`
     const values1 = [Meeting.id, result.rows[0].to_timestamp, result2.rows[0].to_timestamp]
 
     //Query Excution
@@ -67,16 +88,16 @@ exports.editMeeting = async function(x) {
     //Returning Updated Meeting
     return result1.rows[0]
   } else {
-    if (Meeting.start) {
+    if (Meeting.starts) {
       //Query That transforms inputted time to timestamp readable in postgres
-      const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
-      const values = [Meeting.start]
+      const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
+      const values = [Meeting.starts]
 
       //Query Excution
       const result = await db.query(query, values)
 
       //Query which updates a certain row
-      const query1 = `UPDATE public.meetings SET start=$2 WHERE id=$1 RETURNING *`
+      const query1 = `UPDATE public.meetings SET starts=$2 WHERE id=$1 RETURNING *`
       const values1 = [Meeting.id, result.rows[0].to_timestamp]
 
       //Query Excution
@@ -85,16 +106,16 @@ exports.editMeeting = async function(x) {
       //Returning Updated Meeting
       return result1.rows[0]
     } else {
-      if (Meeting.end) {
+      if (Meeting.ends) {
         //Query That transforms inputted time to timestamp readable in postgres
-        const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
-        const values = [Meeting.end]
+        const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
+        const values = [Meeting.ends]
 
         //Query Excution
         const result = await db.query(query, values)
 
         //Query which updates a certain row
-        const query1 = `UPDATE public.meetings SET end=$2 WHERE id=$1 RETURNING *`
+        const query1 = `UPDATE public.meetings SET ends=$2 WHERE id=$1 RETURNING *`
         const values1 = [Meeting.id, result.rows[0].to_timestamp]
 
         //Query Excution

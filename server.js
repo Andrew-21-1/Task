@@ -25,10 +25,10 @@ app.use(loggerMiddleware)
 app.use(passport.initialize())
 
 //Query that drops all tables
-// client.query(tables.dropTables)
+//client.query(tables.dropTables)
 
 //Query that creates all tables
-// client.query(tables.createTables)
+//client.query(tables.createTables)
 
 client
   .connect()

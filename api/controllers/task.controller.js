@@ -23,7 +23,7 @@ exports.createTask = async function(x) {
   const Task = x
 
   //Query That transforms inputted time to timestamp readable in postgres
-  const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
+  const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
   const values = [Task.deadline]
 
   //Query Excution
@@ -47,7 +47,7 @@ exports.editTask = async function(x) {
 
   if (Task.topic && Task.deadline) {
     //Query That transforms inputted time to timestamp readable in postgres
-    const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
+    const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
     const values = [Task.deadline]
 
     //Query Excution
@@ -76,7 +76,7 @@ exports.editTask = async function(x) {
     } else {
       if (Task.deadline) {
         //Query That transforms inputted time to timestamp readable in postgres
-        const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH:MI:SS');`
+        const query = `SELECT TO_TIMESTAMP($1,'YYYY-MM-DD HH24:MI:SS');`
         const values = [Task.deadline]
 
         //Query Excution
