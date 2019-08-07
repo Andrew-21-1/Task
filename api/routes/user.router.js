@@ -3,9 +3,9 @@ const express = require('express')
 const router = express.Router()
 
 // const User1 = {
-//   email: 'andrew.ashraf@ymail.com',
-//   username: 'AndrewAshraf1',
-//   password: 'AndrewAshraf'
+//   email: 'andrew.ashr11111af@ymail.com',
+//   username: 'andrew1111ashraf',
+//   password: '125378waas'
 // }
 
 // User.createUser(User1).then(res => {
@@ -31,4 +31,9 @@ const router = express.Router()
 // User.checkUserSuspended(1).then(res => {
 //   console.log(res)
 // })
+
+// User.validateUser(User1).then(res => {
+//   console.log(res)
+// })
+
 module.exports = router

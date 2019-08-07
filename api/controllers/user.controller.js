@@ -1,6 +1,7 @@
 //Existing files Imports
 const db = require('../../config/DBconfig')
 const tokenKey = require('../../config/keys.js').secretOrKey
+const userValidation = require('../../helpers/user.validation')
 
 //External packages Imports
 const bcrypt = require('bcryptjs')
@@ -16,14 +17,12 @@ exports.createUser = async function(x) {
   User.password = cryptedPassword
 
   //Query/Values
-  const query = `INSERT INTO public.users(email,username, password) VALUES ($1, $2, $3)`
-  const query2 = `SELECT * FROM users WHERE username=$1`
+  const query = `INSERT INTO public.users(email,username, password) VALUES ($1, $2, $3) RETURNING *`
   const values = [User.email, User.username, cryptedPassword]
-  const values2 = [User.username]
 
   //Query Execution
-  await db.query(query, values)
-  const result = await db.query(query2, values2)
+  const result = await db.query(query, values)
+
   const createdUser = result.rows[0]
   return createdUser
 }
@@ -197,5 +196,14 @@ exports.checkUserExists = async function(x) {
     return true
   } else {
     return false
+  }
+}
+
+exports.validateUser = async function(x) {
+  const isValidated = userValidation.createValidation(x)
+  if (isValidated.error) {
+    return { error: isValidated.error.details[0].message, validated: false }
+  } else {
+    return true
   }
 }
