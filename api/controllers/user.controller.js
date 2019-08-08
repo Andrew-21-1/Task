@@ -11,6 +11,7 @@ exports.signup = async (req, res) => {
       if (result == true) {
         const createdUser = await userFunctions.createUser(req.body.body)
         const newUser = {
+          id: createdUser.id,
           email: createdUser.email,
           username: createdUser.username,
           suspended: createdUser.suspended,
@@ -147,12 +148,6 @@ exports.suspendUser = async (req, res) => {
   if (!checkFrozen) {
     if (!checkSuspended) {
       const suspend = await userFunctions.suspendUser(id)
-      const updatedSuspend = {
-        email: suspend.email,
-        username: suspend.username,
-        suspended: suspend.suspended,
-        frozen: suspend.frozen
-      }
       res.json({
         header: {
           statusCode: '0000',
@@ -160,7 +155,7 @@ exports.suspendUser = async (req, res) => {
           timestamp: new Date()
         },
         msg: suspend.username + ' Suspended',
-        body: updatedSuspend
+        body: suspend
       })
     } else {
       res.json({

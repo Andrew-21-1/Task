@@ -64,7 +64,6 @@ exports.suspendUser = async function(x) {
 
   //Query Execution
   const result = await db.query(query, values)
-
   return result.rows[0]
 }
 
@@ -146,11 +145,12 @@ exports.checkUserFrozen = async function(x) {
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null)
+    if (result.rows[0].frozen) {
+      return true
+    } else {
+      return false
+    }
 }
 
 exports.checkUserSuspended = async function(x) {
@@ -164,11 +164,12 @@ exports.checkUserSuspended = async function(x) {
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].suspended) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null)
+    if (result.rows[0].suspended) {
+      return true
+    } else {
+      return false
+    }
 }
 
 exports.checkLogin = async function(x, y) {

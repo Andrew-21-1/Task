@@ -74,7 +74,7 @@ exports.editTask = async (req, res) => {
       }
     }
   }
-  const checkFrozen = await taskFunctions.checkTaskFrozen(id)
+  const checkFrozen = await taskFunctions.checkTaskFrozen(Task.id)
 
   if (checkFrozen) {
     res.json({
