@@ -1,7 +1,6 @@
 const taskFunctions = require('../../helpers/funtions/task.function')
 const appliesFunctions = require('../../helpers/funtions/taskApplies.function')
 const submissionValidation = require('../../helpers/validations/task.validation')
-const uuid = require('uuidv4')
 
 exports.createTask = async (req, res) => {
   const Task = req.body.body
@@ -19,7 +18,7 @@ exports.createTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '0000',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Task Created successfully',
@@ -29,7 +28,7 @@ exports.createTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '2014',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: result.error,
@@ -43,7 +42,7 @@ exports.createTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '2012',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Deadline is Behind Current Date',
@@ -56,51 +55,75 @@ exports.createTask = async (req, res) => {
 
 exports.editTask = async (req, res) => {
   const Task = req.body.body
-  const newTask = {
-    topic: Task.topic,
-    deadline: Task.deadline
+  let newTask
+  if (Task.deadline && Task.topic) {
+    newTask = {
+      topic: Task.topic,
+      deadline: Task.deadline
+    }
+  } else {
+    if (Task.deadline) {
+      newTask = {
+        deadline: Task.deadline
+      }
+    } else {
+      if (Task.topic) {
+        newTask = {
+          topic: Task.topic
+        }
+      }
+    }
   }
+  const checkFrozen = await taskFunctions.checkTaskFrozen(id)
 
+  if (checkFrozen) {
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is Frozen'
+    })
+  }
   const deadline = await taskFunctions.checkDeadline(Task.deadline)
 
-  if (deadline) {
-    const result = await taskFunctions.validateUpdateTask(newTask)
-    if (result == true) {
-      const createdTask = await taskFunctions.editTask(Task)
-      res.json({
-        header: {
-          statusCode: '0000',
-          requestId: uuid.v4(),
-          timestamp: new Date()
-        },
-        msg: 'Task Updated successfully',
-        body: createdTask
-      })
-    } else {
-      res.json({
-        header: {
-          statusCode: '2014',
-          requestId: uuid.v4(),
-          timestamp: new Date()
-        },
-        msg: result.error,
-        body: {
-          topic: result.topic,
-          deadline: result.deadline
-        }
-      })
+  const result = await taskFunctions.validateUpdateTask(newTask)
+  if (result == true) {
+    if (Task.deadline) {
+      if (!deadline) {
+        res.json({
+          header: {
+            statusCode: '2012',
+            requestId: 'A-123',
+            timestamp: new Date()
+          },
+          msg: 'Deadline is Behind Current Date',
+          body: {
+            deadline: Task.deadline
+          }
+        })
+      }
     }
+    const editTask = await taskFunctions.editTask(Task)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Task Updated successfully',
+      body: editTask
+    })
   } else {
     res.json({
       header: {
-        statusCode: '2012',
-        requestId: uuid.v4(),
+        statusCode: '2014',
+        requestId: 'A-123',
         timestamp: new Date()
       },
-      msg: 'Deadline is Behind Current Date',
-      body: {
-        deadline: Task.deadline
-      }
+      msg: result.error,
+      body: newTask
     })
   }
 }
@@ -115,7 +138,7 @@ exports.freezeTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '0000',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Row in table Task with id ' + id + ' is now Frozen',
@@ -125,7 +148,7 @@ exports.freezeTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table Row is already Frozen'
@@ -143,17 +166,17 @@ exports.unfreezeTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '0000',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
-      msg: 'Row in table Task with id ' + id + ' is now Frozen',
+      msg: 'Row in table Task with id ' + id + ' is now Unfrozen',
       body: freeze
     })
   } else {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table Row is already Unfrozen'
@@ -175,7 +198,7 @@ exports.acceptApplicant = async (req, res) => {
         res.json({
           header: {
             statusCode: '0000',
-            requestId: uuid.v4(),
+            requestId: 'A-123',
             timestamp: new Date()
           },
           msg: 'Applicant has been accepted to Task',
@@ -186,7 +209,7 @@ exports.acceptApplicant = async (req, res) => {
       res.json({
         header: {
           statusCode: '1010',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Table TaskApplies Row is Frozen and unaccessable'
@@ -196,7 +219,7 @@ exports.acceptApplicant = async (req, res) => {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table Task Row is Frozen and unaccessable'
@@ -212,7 +235,7 @@ exports.viewTasks = async (req, res) => {
   res.json({
     header: {
       statusCode: '0000',
-      requestId: uuid.v4(),
+      requestId: 'A-123',
       timestamp: new Date()
     },
     msg: 'Tasks return with offset ' + offset + ' and limits ' + limits,
@@ -231,7 +254,7 @@ exports.confirmTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '0000',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Task confirmed after submission',
@@ -241,7 +264,7 @@ exports.confirmTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '2022',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Task Already confirmed'
@@ -251,7 +274,7 @@ exports.confirmTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table Task Row is Frozen and unaccessable'
@@ -267,7 +290,7 @@ exports.viewMyTasks = async (req, res) => {
   res.json({
     header: {
       statusCode: '0000',
-      requestId: uuid.v4(),
+      requestId: 'A-123',
       timestamp: new Date()
     },
     msg: 'Tasks return with offset ' + offset + ' and limits ' + limits,
@@ -287,7 +310,7 @@ exports.applyTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '0000',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Applicant has been accepted to Task',
@@ -297,7 +320,7 @@ exports.applyTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '2024',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'You have Already Applied for this Task'
@@ -307,7 +330,7 @@ exports.applyTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table TaskApplies Row is Frozen and unaccessable'
@@ -335,7 +358,7 @@ exports.submitTask = async (req, res) => {
             res.json({
               header: {
                 statusCode: '2014',
-                requestId: uuid.v4(),
+                requestId: 'A-123',
                 timestamp: new Date()
               },
               msg: isValidated.error.details[0].message,
@@ -347,7 +370,7 @@ exports.submitTask = async (req, res) => {
           res.json({
             header: {
               statusCode: '0000',
-              requestId: uuid.v4(),
+              requestId: 'A-123',
               timestamp: new Date()
             },
             msg: 'Task Submitted successfully',
@@ -357,7 +380,7 @@ exports.submitTask = async (req, res) => {
           res.json({
             header: {
               statusCode: '2022',
-              requestId: uuid.v4(),
+              requestId: 'A-123',
               timestamp: new Date()
             },
             msg: 'Task Already Confirmed cannot change submission'
@@ -367,7 +390,7 @@ exports.submitTask = async (req, res) => {
         res.json({
           header: {
             statusCode: '2030',
-            requestId: uuid.v4(),
+            requestId: 'A-123',
             timestamp: new Date()
           },
           msg: 'This Task hasnt been assigned yet'
@@ -377,7 +400,7 @@ exports.submitTask = async (req, res) => {
       res.json({
         header: {
           statusCode: '2025',
-          requestId: uuid.v4(),
+          requestId: 'A-123',
           timestamp: new Date()
         },
         msg: 'Submission deadline has passed'
@@ -387,10 +410,66 @@ exports.submitTask = async (req, res) => {
     res.json({
       header: {
         statusCode: '1010',
-        requestId: uuid.v4(),
+        requestId: 'A-123',
         timestamp: new Date()
       },
       msg: 'Table Task Row is Frozen and unaccessable'
+    })
+  }
+}
+
+exports.freezeTaskApply = async (req, res) => {
+  const { task_id, applicants_id } = req.body.body
+
+  const checkFrozen = await appliesFunctions.checkTaskApplyFrozen(task_id, applicants_id)
+
+  if (!checkFrozen) {
+    const freeze = await appliesFunctions.freezeTaskApply(task_id, applicants_id)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table TaskApplies is now Frozen',
+      body: freeze
+    })
+  } else {
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Frozen'
+    })
+  }
+}
+
+exports.unfreezeTaskApply = async (req, res) => {
+  const { task_id, applicants_id } = req.body.body
+
+  const checkFrozen = await appliesFunctions.checkTaskApplyFrozen(task_id, applicants_id)
+
+  if (checkFrozen) {
+    const freeze = await appliesFunctions.unfreezeTaskApply(task_id, applicants_id)
+    res.json({
+      header: {
+        statusCode: '0000',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Row in table TaskApplies is now Unfrozen',
+      body: freeze
+    })
+  } else {
+    res.json({
+      header: {
+        statusCode: '1010',
+        requestId: 'A-123',
+        timestamp: new Date()
+      },
+      msg: 'Table Row is already Unfrozen'
     })
   }
 }

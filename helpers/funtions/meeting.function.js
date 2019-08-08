@@ -4,7 +4,7 @@ const meetingValidation = require('../validations/meeting.validation')
 
 //External packages Imports
 
-exports.checkEnd = async function(x) {
+exports.checkDate = async function(x) {
   let GivenDate = x
 
   //Getting todays current date/time
@@ -17,6 +17,34 @@ exports.checkEnd = async function(x) {
   } else {
     return false
   }
+}
+
+exports.compareStartEnd = async function(x, y) {
+  let start = x
+  let end = y
+
+  //Getting todays current date/time
+  startDate = new Date(start)
+  endDate = new Date(end)
+
+  //Comparing inputted time with current date/time
+  if (endDate > startDate) {
+    return true
+  } else {
+    return false
+  }
+}
+
+exports.getMeeting = async function(x) {
+  const id = x
+
+  const query = `SELECT * FROM meetings WHERE id=$1 `
+  const values = [id]
+
+  //Query Excution
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.createMeeting = async function(x) {
@@ -50,7 +78,6 @@ exports.createMeeting = async function(x) {
 
     //Query Excution
     const result4 = await db.query(query4, values4)
-    console.log(result4)
 
     if (result4.rows[0].assignee_id) {
       //Inserting Meetings into Table
@@ -132,22 +159,26 @@ exports.freezeMeeting = async function(x) {
   const id = x
 
   //Query/Values
-  const query = `UPDATE meetings SET frozen='true' WHERE id=$1`
+  const query = `UPDATE meetings SET frozen='true' WHERE id=$1 RETURNING *`
   const values = [id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.unfreezeMeeting = async function(x) {
   const id = x
 
   //Query/Values
-  const query = `UPDATE meetings SET frozen='false' WHERE id=$1`
+  const query = `UPDATE meetings SET frozen='false' WHERE id=$1 RETURNING *`
   const values = [id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.validateCreateMeeting = async function(x) {

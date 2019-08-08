@@ -3,6 +3,8 @@ const db = require('../../config/DBconfig')
 const tokenKey = require('../../config/keys.js').secretOrKey
 const userValidation = require('../validations/user.validation')
 
+let cache = new Map()
+
 //External packages Imports
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -82,12 +84,16 @@ exports.unsuspendUser = async function(x) {
 exports.loginUser = async function(x) {
   //Needed constants in function
   let token = 'Bearer '
+  const id = x
   let payload = {
     id: x
   }
 
   //Token Creation
   token = token + jwt.sign(payload, tokenKey, { expiresIn: '1h' })
+
+  //caching token
+  cache.set(id, token)
 
   //Return of generateted JWT Token
   return token
@@ -212,5 +218,16 @@ exports.validateUser = async function(x) {
     return { error: isValidated.error.details[0].message, validated: false }
   } else {
     return true
+  }
+}
+
+exports.checkLoggedIn = async function(x) {
+  const id = x
+
+  const loginFlag = cache.get(id)
+  if (loginFlag != null) {
+    return true
+  } else {
+    return false
   }
 }

@@ -38,11 +38,13 @@ exports.freezeTaskApply = async function(x, y) {
   const applicants_id = y
 
   //Query/Values
-  const query = `UPDATE taskapplies SET frozen='true' WHERE task_id=$1 AND applicants_id=$2`
+  const query = `UPDATE taskapplies SET frozen='true' WHERE task_id=$1 AND applicants_id=$2 RETURNING *`
   const values = [task_id, applicants_id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.unfreezeTaskApply = async function(x, y) {
@@ -50,11 +52,13 @@ exports.unfreezeTaskApply = async function(x, y) {
   const applicants_id = y
 
   //Query/Values
-  const query = `UPDATE taskapplies SET frozen='false' WHERE task_id=$1 AND applicants_id=$2`
+  const query = `UPDATE taskapplies SET frozen='false' WHERE task_id=$1 AND applicants_id=$2 RETURNING *`
   const values = [task_id, applicants_id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.checkTaskApplyFrozen = async function(x, y) {

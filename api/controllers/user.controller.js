@@ -82,6 +82,17 @@ exports.signin = async (req, res) => {
         msg: 'Table Row is Frozen and unaccessable'
       })
     }
+    const checkLoggedin = await userFunctions.checkLoggedIn(checkLogin.userId)
+    if (checkLoggedin) {
+      res.json({
+        header: {
+          statusCode: '1032',
+          requestId: 'A-123',
+          timestamp: new Date()
+        },
+        msg: 'Already Logged In'
+      })
+    }
     if (await userFunctions.checkUserSuspended(checkLogin.userId)) {
       res.json({
         header: {

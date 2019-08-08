@@ -22,7 +22,7 @@ exports.checkMeetingAcceptsExists = async function(x, y, z) {
   const invited_id = z
 
   //Query/Values
-  const query = `SELECT * FROM taskapplies WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
+  const query = `SELECT * FROM meetingsaccepts WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
@@ -41,24 +41,28 @@ exports.freezeMeetingAccepts = async function(x, y, z) {
   const invited_id = z
 
   //Query/Values
-  const query = `UPDATE meetingsaccepts SET frozen='true' WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
+  const query = `UPDATE meetingsaccepts SET frozen='true' WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3 RETURNING *`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
-exports.unfreezeMeetingAccepts = async function(x, y) {
+exports.unfreezeMeetingAccepts = async function(x, y, z) {
   const task_id = x
   const meeting_id = y
   const invited_id = z
 
   //Query/Values
-  const query = `UPDATE meetingsaccepts SET frozen='false' WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
+  const query = `UPDATE meetingsaccepts SET frozen='false' WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3 RETURNING *`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
-  db.query(query, values)
+  const result = await db.query(query, values)
+
+  return result.rows[0]
 }
 
 exports.checkMeetingAcceptsFrozen = async function(x, y, z) {
@@ -67,18 +71,19 @@ exports.checkMeetingAcceptsFrozen = async function(x, y, z) {
   const invited_id = z
 
   //Query/Values
-  const query = `SELECT * FROM taskapplies WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
+  const query = `SELECT * FROM meetingsaccepts WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].frozen) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null)
+    if (result.rows[0].frozen) {
+      return true
+    } else {
+      return false
+    }
 }
 
 exports.confirmMeeting = async function(x, y, z) {
@@ -87,7 +92,7 @@ exports.confirmMeeting = async function(x, y, z) {
   const invited_id = z
 
   //Query/Values
-  const query = `UPDATE public.taskapplies SET confirmed=true WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3 RETURNING *`
+  const query = `UPDATE meetingsaccepts SET confirmed=true WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3 RETURNING *`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
@@ -102,16 +107,17 @@ exports.checkConfirmedAttend = async function(x, y, z) {
   const invited_id = z
 
   //Query/Values
-  const query = `SELECT * FROM taskapplies WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
+  const query = `SELECT * FROM meetingsaccepts WHERE task_id=$1 AND meeting_id=$2 AND invited_id=$3`
   const values = [task_id, meeting_id, invited_id]
 
   //Query Execution
   const result = await db.query(query, values)
 
   //Check if found or not
-  if (result.rows[0].confirmed) {
-    return true
-  } else {
-    return false
-  }
+  if (result.rows[0] != null)
+    if (result.rows[0].confirmed) {
+      return true
+    } else {
+      return false
+    }
 }

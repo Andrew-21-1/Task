@@ -13,4 +13,7 @@ router.post('/confirmTask/v1', taskController.confirmTask)
 router.post('/applyTask/v1', taskController.applyTask)
 router.post('/submitTask/v1', taskController.submitTask)
 
+router.post('/freezeTaskApply/v1', taskController.freezeTaskApply)
+router.post('/unfreezeTaskApply/v1', taskController.unfreezeTaskApply)
+
 module.exports = router
